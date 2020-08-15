@@ -199,7 +199,7 @@ $func-height: 70px;
 			height: 45px;
 			border-radius: 50%;
 			border: 2px solid rgb(255, 255, 255);
-			background-color: #ff0;
+			background: url(../../public/images/default.jpg);
 			background-size: cover;
 			background-repeat: no-repeat;
 		}

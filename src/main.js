@@ -5,7 +5,7 @@ import store from './store'
 
 import axios from 'axios'
 Vue.prototype.$axios = axios
-axios.defaults.baseURL = 'http://127.0.0.1/'; //默认地址
+axios.defaults.baseURL = 'http://192.168.0.184/'; //默认地址
 
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
