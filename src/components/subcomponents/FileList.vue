@@ -49,19 +49,23 @@
 var cityOptions = []
 export default {
 	mounted() {
-		this.$axios.get('cloud_server/index.php').then(res => {
-			this.cities = res.data
-		})
+		this.getList()
 	},
 	data() {
 		return {
 			checkAll: false,
 			checkedCities: [],
 			cities: cityOptions,
-			isIndeterminate: false
+			isIndeterminate: false,
 		}
 	},
 	methods: {
+		getList() {
+			// 挂在页面时自动取回目录文件
+			this.$axios.get('cloud_server/index.php').then(res => {
+				this.cities = res.data
+			})
+		},
 		handleCheckAllChange(val) {
 			this.checkedCities = val ? this.cities : []
 			this.isIndeterminate = false
@@ -104,7 +108,7 @@ export default {
 		list-style-type: none;
 		overflow: hidden;
 		font-size: 13px;
-		border-bottom: 1px solid rgb(235, 235, 235);
+		border-bottom: 1px solid #f2f6fd;
 		color: rgb(119, 119, 119);
 		/* width: 100%; */
 
@@ -148,10 +152,12 @@ export default {
 		align-items: center;
 		font-weight: bold;
 		height: 50px;
-		border-bottom: 1px solid #ccc;
+		border-bottom: 1px solid #f2f6fd;
 
 		&:hover {
-			background-color: rgba(170, 170, 170, 0.281);
+			background-color: #f4fbff;
+			border-top: 1px solid #cbedff;
+			border-bottom: 1px solid #cbedff;
 		}
 
 		.fname {

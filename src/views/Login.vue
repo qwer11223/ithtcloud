@@ -1,7 +1,7 @@
 <template>
 	<transition name="el-fade-in">
 		<div class="login-container" v-show="show">
-			<div class="box"  >
+			<div class="box">
 				<p class="title">Cloud</p>
 				<div class="inner">
 					<form>
@@ -41,13 +41,14 @@ export default {
 			var params = new URLSearchParams()
 			params.append('user', this.user)
 			params.append('pwd', this.pwd)
-			this.$axios.post('cloud_server/jwt.php', params).then(res => {
-				if (res.data == 403) {
+			this.$axios.post('cloud_server/token.php', params).then(res => {
+				if (res.data.error == 401) {
 					this.open4()
 					return false
+				} else {
+					localStorage.setItem('token', res.headers.authorization)
+					this.$router.push('/')
 				}
-				localStorage.setItem('token', res.headers.authorization)
-				this.$router.push('/')
 			})
 		},
 		open4() {
@@ -58,19 +59,6 @@ export default {
 			})
 		}
 
-		/*
-		check() {
-			this.$axios({
-				methods: 'POST',
-				url: 'cloud_server/jwt.php',
-				headers: {
-					TOKEN: localStorage.getItem('token')
-				}
-			}).then(res => {
-				console.log(res)
-			})
-		}
-		*/
 	}
 }
 </script>
