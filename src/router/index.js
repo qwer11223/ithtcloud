@@ -3,14 +3,37 @@ import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
 import Login from '../views/Login.vue'
 import FileContent from '../components/FileContent.vue'
+import Picture from '../components/Picture.vue'
+import Document from '../components/Document.vue'
+import Video from '../components/Video.vue'
+import Music from '../components/Music.vue'
+import Other from '../components/Other.vue'
+import Share from '../components/Share.vue'
+import Recycle from '../components/Recycle.vue'
+
+
+
+const originalPush = VueRouter.prototype.push
+VueRouter.prototype.push = function push(location) {
+  return originalPush.call(this, location).catch(err => err)
+}
 
 Vue.use(VueRouter)
 
 const routes = [
-  { path: '/', redirect: '/filecontent' },
+  { path: '/', redirect: '/filecontent/root' },
   {
-    path: '/', name: 'Home', component: Home, children: [
-      { path: 'filecontent', component: FileContent }]
+    path: '/', name: 'Home', component: Home,
+    children: [
+      { path: 'filecontent/:path', component: FileContent },
+      { path: 'picture', component: Picture },
+      { path: 'document', component: Document },
+      { path: 'video', component: Video },
+      { path: 'music', component: Music },
+      { path: 'other', component: Other },
+      { path: 'share', component: Share },
+      { path: 'recycle', component: Recycle }
+    ]
   },
   { path: '/login', name: 'Login', component: Login },
   /*
@@ -26,6 +49,7 @@ const routes = [
 ]
 
 const router = new VueRouter({
+  mode:'history',
   routes
 })
 

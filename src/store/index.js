@@ -6,7 +6,8 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   state: {
     search_keywords: '',
-    checkedCities: []
+    checkedCities: [],
+    loading: false
   },
   mutations: {
     search(state, keywords) {

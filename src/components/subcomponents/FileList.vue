@@ -2,10 +2,7 @@
 	<!--文件列表-->
 	<div class="frame-content">
 		<!--提示-->
-		<div class="chd">
-			<span class="ctxtl">全部文件</span>
-			<span class="ctxtr">已全部加载，共{{filetotal}}个</span>
-		</div>
+		<total :filetotal="filetotal" ref="total"></total>
 
 		<div class="chdun">
 			<ul class="type">
@@ -31,7 +28,12 @@
 		<div class="chlist">
 			<el-checkbox-group v-model="checkedCities" @change="handleCheckedCitiesChange">
 				<dl>
-					<dd v-for="item in search($store.state.search_keywords)" :key="item.name" class="listrow">
+					<dd
+						v-for="item in search($store.state.search_keywords)"
+						:key="item.name"
+						class="listrow"
+						@dblclick="ch(item)"
+					>
 						<div class="fname">
 							<el-checkbox :label="item">{{item.name}}</el-checkbox>
 						</div>
@@ -46,10 +48,12 @@
 </template>
 
 <script>
+import total from '@/components/subcomponents/Total.vue'
+
 var cityOptions = []
 export default {
 	mounted() {
-		this.getList()
+		this.getList('suadmin')
 	},
 	data() {
 		return {
@@ -57,13 +61,17 @@ export default {
 			checkedCities: [],
 			cities: cityOptions,
 			isIndeterminate: false,
+			path_arg: ''
 		}
 	},
 	methods: {
-		getList() {
-			// 挂在页面时自动取回目录文件
-			this.$axios.get('cloud_server/index.php').then(res => {
+		getList(path) {
+			// 挂载页面时自动取回目录文件
+			//console.log('cloud_server/index.php?path='+path)
+			this.$store.state.loading = true
+			this.$axios.get('cloud_server/index.php?path=' + path).then(res => {
 				this.cities = res.data
+				this.$store.state.loading = false
 			})
 		},
 		handleCheckAllChange(val) {
@@ -80,6 +88,16 @@ export default {
 			return this.cities.filter(item => {
 				if (item.name.includes(keyword)) return item
 			})
+		},
+		ch: function(item) {
+			if (item.type == '-') {
+				if (this.path_arg === '/') this.path_arg = ''
+				if (this.path_arg === '') this.path_arg = item.name
+				else this.path_arg += '&' + item.name
+				this.$router.push('/filecontent/' + this.path_arg)
+				//this.cities = item.children
+				this.$refs.total.flag = false
+			}
 		}
 	},
 	computed: {
@@ -90,19 +108,26 @@ export default {
 	watch: {
 		checkedCities: function(n) {
 			this.$store.commit('checked', n)
+		},
+
+		'$route.params.path': function(newValue, oldValue) {
+			var newValue = newValue
+			if (newValue == 'root') {
+				newValue = '/'
+				this.$refs.total.flag = true
+			}
+			this.path_arg = newValue
+			this.$refs.total.list = newValue.split('&')
+			this.getList('suadmin/' + newValue.replace(/\&/g, '/'))
 		}
+	},
+	components: {
+		total
 	}
 }
 </script>
 
 <style lang="scss" scoped>
-.chd {
-	display: flex;
-	justify-content: space-between;
-	padding: 0 15px;
-	font-size: 14px;
-}
-
 .chdun {
 	.type {
 		list-style-type: none;
@@ -143,6 +168,8 @@ export default {
 }
 
 .chlist {
+	user-select: none;
+
 	.el-checkbox-group {
 		font-size: 12px;
 	}

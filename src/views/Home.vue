@@ -8,29 +8,31 @@
 						<i class="fa fa-mixcloud" aria-hidden="true" style="margin-right:15px"></i>Cloud
 					</div>
 
-					<div class="user" @click="verifyToken" @mouseover="popflag=1" @mouseout="popflag=0">
+					<div class="user" @click="verifyToken" @mouseover="overpop" @mouseout="outpop">
 						<div class="head">
 							<img :src="user_info.hd_img" />
 						</div>
-						<span>{{user_info.uid}}</span>
+						<span class="fc">{{user_info.uid}}</span>
 
-						<div class="popover" v-show="popflag" @mouseover="popflag=1" @mouseout="popflag=0">
-							<div class="popheader">
-								<div class="popuser">
-									<div class="head">
-										<img :src="user_info.hd_img" />
+						<transition name="fade">
+							<div class="popover" v-show="popflag" @mouseover="overpop" @mouseout="outpop">
+								<div class="popheader">
+									<div class="popuser">
+										<div class="head">
+											<img :src="user_info.hd_img" />
+										</div>
+										<span title="超级权限用户" class="fc">{{user_info.uid}}</span>
 									</div>
-									<span>{{user_info.uid}}</span>
+								</div>
+								<div class="poplist">
+									<ul>
+										<li>个人资料</li>
+										<li>偏好设置</li>
+										<li @click="logOut">退出</li>
+									</ul>
 								</div>
 							</div>
-							<div class="poplist">
-								<ul>
-									<li>个人资料</li>
-									<li>偏好设置</li>
-									<li @click="logOut">退出</li>
-								</ul>
-							</div>
-						</div>
+						</transition>
 					</div>
 				</div>
 			</el-col>
@@ -40,31 +42,29 @@
 			<!-- aside -->
 			<el-col :span="3" class="aside">
 				<div class="as-menu">
-					<el-menu default-active="2" class="el-menu-vertical-demo">
-						<el-submenu index="1">
-							<template slot="title">
-								<i class="el-icon-menu"></i>
-								<span>全部文件</span>
-							</template>
-							<el-menu-item-group>
-								<el-menu-item index="1-1">图片</el-menu-item>
-								<el-menu-item index="1-3">文档</el-menu-item>
-								<el-menu-item index="1-4">视频</el-menu-item>
-								<el-menu-item index="1-5">音乐</el-menu-item>
-								<el-menu-item index="1-6">其他</el-menu-item>
-							</el-menu-item-group>
-						</el-submenu>
+					<el-menu default-active="2" class="el-menu-vertical-demo" router>
+						<el-menu-item index="/">
+							<i class="el-icon-menu"></i>
+							<span slot="title">全部文件</span>
+						</el-menu-item>
+						<ul class="el-menu-item-group">
+							<el-menu-item index="/picture">图片</el-menu-item>
+							<el-menu-item index="/document">文档</el-menu-item>
+							<el-menu-item index="/video">视频</el-menu-item>
+							<el-menu-item index="/music">音乐</el-menu-item>
+							<el-menu-item index="/other">其他</el-menu-item>
+						</ul>
 
-						<el-menu-item index="2">
+						<el-menu-item index="/share">
 							<i class="el-icon-share"></i>
 							<span slot="title">我的分享</span>
 						</el-menu-item>
 
-						<el-menu-item index="3">
+						<el-menu-item index="/Recycle">
 							<i class="el-icon-delete"></i>
 							<span slot="title">回收站</span>
 						</el-menu-item>
-						<el-menu-item index="4">
+						<el-menu-item index="4" disabled>
 							<i class="el-icon-refresh"></i>
 							<span slot="title">多设备同步</span>
 						</el-menu-item>
@@ -84,7 +84,7 @@
 						<el-button type="primary" @click="drawer = true">
 							<i class="fa fa-upload" aria-hidden="true"></i>上传文件
 						</el-button>
-						<el-button type="primary" plain>新建文件夹</el-button>
+						<el-button type="primary" plain @click="dialogFormVisible = true">新建文件夹</el-button>
 						<el-button
 							type="primary"
 							plain
@@ -99,8 +99,8 @@
 					</div>
 				</div>
 
-				<div class="main-view">
-					<router-view></router-view>
+				<div class="main-view" v-loading="this.$store.state.loading">
+					<router-view ref="view"></router-view>
 				</div>
 			</el-col>
 		</el-row>
@@ -110,12 +110,13 @@
 			<el-upload
 				class="upload-demo"
 				ref="upload"
-				action="http://192.168.0.184/cloud_server/upload.php"
+				action="http://192.168.1.100/cloud_server/upload.php"
 				:on-preview="handlePreview"
 				:on-remove="handleRemove"
 				:file-list="fileList"
 				:auto-upload="false"
 				:drag="true"
+				:on-success="upSuccess"
 				multiple
 			>
 				<el-button slot="trigger" size="small" type="primary" class="ch-btn">选取文件</el-button>
@@ -128,6 +129,19 @@
 				>上传到服务器</el-button>
 			</el-upload>
 		</el-drawer>
+
+		<!-- 新建文件对话框 -->
+		<el-dialog title="新建文件夹" :visible.sync="dialogFormVisible">
+			<el-form :model="form">
+				<el-form-item label="文件夹名称" :label-width="formLabelWidth">
+					<el-input v-model="form.name" autocomplete="off"></el-input>
+				</el-form-item>
+			</el-form>
+			<div slot="footer" class="dialog-footer">
+				<el-button @click="dialogFormVisible = false">取 消</el-button>
+				<el-button type="primary" @click="newFolder">确 定</el-button>
+			</div>
+		</el-dialog>
 	</div>
 </template>
 
@@ -142,15 +156,35 @@ export default {
 			keywords: '',
 			popflag: false,
 			user_info: [],
+			loading: false,
 
-			//上传面板属性
-			fileList: []
+			//上传面板
+			fileList: [],
+
+			//新建文件夹
+			dialogTableVisible: false,
+			dialogFormVisible: false,
+			form: {
+				name: ''
+			},
+			formLabelWidth: '120px'
+			//wrong_name:['\\','\/',':','*','?','"','<','>','|']
 		}
 	},
-	created(){
+	created() {
 		this.verifyToken()
 	},
+
 	methods: {
+		open1() {
+			this.$message('打包文件中')
+		},
+		open2() {
+			this.$message({
+				message: '打包完成',
+				type: 'success'
+			})
+		},
 		verifyToken() {
 			// 验证token有效，并自动登录
 			this.$axios({
@@ -168,10 +202,14 @@ export default {
 				}
 			})
 		},
+		upSuccess() {
+			this.$refs.view.$refs.filelist.getList('suadmin')
+		},
 		download() {
+			this.open1()
 			let temparr = []
 			this.$store.state.checkedCities.forEach(e => {
-				temparr.push(e.basename)
+				temparr.push(e.path)
 			})
 			this.$axios
 				.post(
@@ -182,6 +220,7 @@ export default {
 					{ responseType: 'blob' }
 				)
 				.then(res => {
+					this.open2()
 					let filename = res.headers['content-disposition'].split(
 						'='
 					)[1]
@@ -193,9 +232,55 @@ export default {
 					document.body.removeChild(link)
 				})
 		},
+		newFolder() {
+			let str = this.form.name
+			if (str == '') {
+				alert('名称不能为空!')
+				return false
+			}
+
+			if (str.search(/\\|\/|\:|\*|\?|\"|\<|\>/) != -1) {
+				alert('名称中不能包含 \\ / : * ? " < >')
+				return false
+			}
+
+			var params = new URLSearchParams()
+			params.append('user', this.user_info.uid)
+			params.append('folder_name', this.form.name)
+			this.$axios.post('cloud_server/mkdir.php', params).then(res => {
+				if (res.data.state == 200) {
+					this.$refs.view.$refs.filelist.getList('suadmin')
+					this.$message({
+						type: 'success',
+						message: '文件夹创建成功!'
+					})
+					this.form.name = ''
+					this.dialogFormVisible = false
+				} else {
+					this.$message({
+						type: 'error',
+						message: '文件夹创建失败!'
+					})
+					this.form.name = ''
+					this.dialogFormVisible = false
+				}
+			})
+		},
+
 		logOut() {
 			localStorage.clear()
 			this.$router.push('/login')
+		},
+		overpop() {
+			this.popflag = 1
+			clearTimeout(this.timer)
+		},
+		outpop() {
+			var pop = this
+			clearTimeout(pop.timer)
+			pop.timer = setTimeout(function() {
+				pop.popflag = 0
+			}, 300)
 		},
 
 		//上传面板方法
@@ -211,9 +296,6 @@ export default {
 			//console.log(file)
 		}
 	},
-	mounted() {
-		document.querySelector('.el-submenu__title').click()
-	},
 	watch: {
 		keywords: function(n) {
 			this.$store.commit('search', n)
@@ -227,13 +309,18 @@ $t-height: 70px;
 $b-height: calc(100% - 70px);
 $func-height: 70px;
 
-.app{
+.app {
 	min-width: 1440px;
+	//overflow: hidden;
 }
 
 .top {
 	box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.05);
 	z-index: 99;
+}
+
+.fc {
+	color: rgb(248, 36, 36);
 }
 
 .header {
@@ -327,16 +414,6 @@ $func-height: 70px;
 			right: 20%;
 			z-index: -10;
 		}
-
-		.popover::after {
-			content: '';
-			position: absolute;
-			width: inherit;
-			height: 50px;
-			top: -30px;
-			left: 0;
-			z-index: -99;
-		}
 	}
 }
 
@@ -355,6 +432,13 @@ $func-height: 70px;
 		background-color: #f7f7f7 !important;
 		border-right: 1px solid #eee;
 		overflow: hidden;
+	}
+
+	.el-menu-item-group {
+		.el-menu-item {
+			background-color: #fff;
+			padding-left: 50px !important;
+		}
 	}
 
 	.as-storage {
@@ -398,5 +482,19 @@ $func-height: 70px;
 			}
 		}
 	}
+
+	.main-view {
+		min-height: calc(100% - 70px);
+		overflow-y: auto;
+	}
+}
+
+.fade-enter-active,
+.fade-leave-active {
+	transition: opacity 0.3s;
+}
+.fade-enter,
+.fade-leave-to {
+	opacity: 0;
 }
 </style>

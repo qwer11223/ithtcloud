@@ -1,6 +1,6 @@
 <template>
 	<div class="filelist">
-		<FileList></FileList>
+		<FileList ref="filelist"></FileList>
 	</div>
 </template>
 

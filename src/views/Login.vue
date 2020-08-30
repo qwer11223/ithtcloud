@@ -14,7 +14,10 @@
 							<input type="password" v-model="pwd" placeholder="请输入密码" required />
 						</p>
 						<p class="input btn">
-							<button @click="submit">登录</button>
+							<button @click.prevent="submit">
+								<i class="el-icon-loading" v-show="!login"></i>
+								<span v-show="login">登录</span>
+							</button>
 						</p>
 					</form>
 				</div>
@@ -29,7 +32,8 @@ export default {
 		return {
 			user: '',
 			pwd: '',
-			show: false
+			show: false,
+			login: true
 		}
 	},
 	mounted() {
@@ -38,12 +42,14 @@ export default {
 	methods: {
 		submit() {
 			if (this.user == '' || this.pwd == '') return false
+			this.login = 0
 			var params = new URLSearchParams()
 			params.append('user', this.user)
 			params.append('pwd', this.pwd)
 			this.$axios.post('cloud_server/token.php', params).then(res => {
 				if (res.data.error == 401) {
 					this.open4()
+					this.login = 1
 					return false
 				} else {
 					localStorage.setItem('token', res.headers.authorization)
@@ -58,7 +64,6 @@ export default {
 				type: 'error'
 			})
 		}
-
 	}
 }
 </script>
@@ -121,7 +126,7 @@ export default {
 				transition: 0.3s;
 
 				&:hover {
-					background-color: #fff;
+					background-color: rgba(241, 241, 241, 0.473);
 				}
 			}
 		}
