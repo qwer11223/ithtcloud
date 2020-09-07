@@ -52,15 +52,16 @@
 							<el-menu-item index="/document">文档</el-menu-item>
 							<el-menu-item index="/video">视频</el-menu-item>
 							<el-menu-item index="/music">音乐</el-menu-item>
+							<el-menu-item index="/code">代码</el-menu-item>
 							<el-menu-item index="/other">其他</el-menu-item>
 						</ul>
 
-						<el-menu-item index="/share">
+						<el-menu-item index="/share" disabled>
 							<i class="el-icon-share"></i>
 							<span slot="title">我的分享</span>
 						</el-menu-item>
 
-						<el-menu-item index="/Recycle">
+						<el-menu-item index="/Recycle" disabled>
 							<i class="el-icon-delete"></i>
 							<span slot="title">回收站</span>
 						</el-menu-item>
@@ -81,16 +82,24 @@
 			<el-col :span="21" class="main">
 				<div class="main-func">
 					<div class="f-btn">
-						<el-button type="primary" @click="drawer = true">
+						<el-button type="primary" @click="drawer = true" :disabled="funcbtn">
 							<i class="fa fa-upload" aria-hidden="true"></i>上传文件
 						</el-button>
-						<el-button type="primary" plain @click="dialogFormVisible = true">新建文件夹</el-button>
+						<el-button type="primary" plain @click="dialogFormVisible = true" :disabled="funcbtn">新建文件夹</el-button>
+
 						<el-button
 							type="primary"
 							plain
 							v-show="this.$store.state.checkedCities == ''?false:true"
 							@click="download"
 						>下载</el-button>
+
+						<el-button
+							type="primary"
+							plain
+							v-show="this.$store.state.checkedCities == ''?false:true"
+							@click="dialogVisible=true"
+						>删除</el-button>
 					</div>
 
 					<div class="search">
@@ -100,7 +109,9 @@
 				</div>
 
 				<div class="main-view" v-loading="this.$store.state.loading">
-					<router-view ref="view"></router-view>
+					<transition mode="out-in">
+						<router-view ref="view"></router-view>
+					</transition>
 				</div>
 			</el-col>
 		</el-row>
@@ -117,9 +128,11 @@
 				:auto-upload="false"
 				:drag="true"
 				:on-success="upSuccess"
+				:data="{path:this.$store.state.user_info.uid + '/' + this.$store.state.path}"
 				multiple
 			>
 				<el-button slot="trigger" size="small" type="primary" class="ch-btn">选取文件</el-button>
+				<!-- <input type="file" webkitdirectory name="" id="" @change="upMore($event.target.files)"> -->
 				<el-button
 					style="margin-left: 10px;"
 					size="small"
@@ -128,6 +141,15 @@
 					class="up-btn"
 				>上传到服务器</el-button>
 			</el-upload>
+
+			<!-- <uploader :options="options" class="uploader-example">
+				<uploader-unsupport :autoStart="false"></uploader-unsupport>
+				<uploader-drop>
+					<uploader-btn >上传文件</uploader-btn>
+					<uploader-btn :directory="true">上传文件夹</uploader-btn>
+				</uploader-drop>
+				<uploader-list></uploader-list>
+			</uploader>-->
 		</el-drawer>
 
 		<!-- 新建文件对话框 -->
@@ -141,6 +163,15 @@
 				<el-button @click="dialogFormVisible = false">取 消</el-button>
 				<el-button type="primary" @click="newFolder">确 定</el-button>
 			</div>
+		</el-dialog>
+
+		<!-- 删除确认对话框 -->
+		<el-dialog title="确认删除" :visible.sync="dialogVisible" width="30%" :before-close="handleClose">
+			<span>确认要把所选文件放入回收站吗？</span>
+			<span slot="footer" class="dialog-footer">
+				<el-button @click="dialogVisible = false">取 消</el-button>
+				<el-button type="primary" @click="del">确 定</el-button>
+			</span>
 		</el-dialog>
 	</div>
 </template>
@@ -157,9 +188,16 @@ export default {
 			popflag: false,
 			user_info: [],
 			loading: false,
+			packdone: {},
+			funcbtn: false,
 
 			//上传面板
 			fileList: [],
+			/*
+			options: {
+				target: 'http://192.168.1.100/cloud_server/upload.php',
+				testChunks: false,
+			},*/
 
 			//新建文件夹
 			dialogTableVisible: false,
@@ -167,8 +205,11 @@ export default {
 			form: {
 				name: ''
 			},
-			formLabelWidth: '120px'
+			formLabelWidth: '120px',
 			//wrong_name:['\\','\/',':','*','?','"','<','>','|']
+
+			//删除文件
+			dialogVisible: false
 		}
 	},
 	created() {
@@ -176,10 +217,18 @@ export default {
 	},
 
 	methods: {
+		upMore(e) {
+			console.log(e)
+		},
 		open1() {
-			this.$message('打包文件中')
+			this.packdone = this.$message({
+				message: '文件打包中',
+				iconClass: 'el-icon-loading',
+				duration: 0
+			})
 		},
 		open2() {
+			this.packdone.close()
 			this.$message({
 				message: '打包完成',
 				type: 'success'
@@ -194,7 +243,7 @@ export default {
 					TOKEN: localStorage.getItem('token')
 				}
 			}).then(res => {
-				//console.log(res)
+				this.$store.state.user_info = res.data
 				if (res.data.state == 401) {
 					this.$router.push('/login')
 				} else {
@@ -203,7 +252,9 @@ export default {
 			})
 		},
 		upSuccess() {
-			this.$refs.view.$refs.filelist.getList('suadmin')
+			var path =
+				this.$store.state.user_info.uid + '/' + this.$store.state.path
+			this.$refs.view.$refs.filelist.getList(path)
 		},
 		download() {
 			this.open1()
@@ -232,6 +283,24 @@ export default {
 					document.body.removeChild(link)
 				})
 		},
+		del() {
+			this.dialogVisible = false
+			let temparr = []
+			this.$store.state.checkedCities.forEach(e => {
+				temparr.push(e.path)
+			})
+			this.$axios
+				.post('cloud_server/delete.php', {
+					file: temparr
+				})
+				.then(res => {
+					var path =
+						this.$store.state.user_info.uid +
+						'/' +
+						this.$store.state.path
+					this.$refs.view.$refs.filelist.getList(path)
+				})
+		},
 		newFolder() {
 			let str = this.form.name
 			if (str == '') {
@@ -244,12 +313,15 @@ export default {
 				return false
 			}
 
+			var path =
+				this.$store.state.user_info.uid + '/' + this.$store.state.path
 			var params = new URLSearchParams()
 			params.append('user', this.user_info.uid)
 			params.append('folder_name', this.form.name)
+			params.append('path', path)
 			this.$axios.post('cloud_server/mkdir.php', params).then(res => {
 				if (res.data.state == 200) {
-					this.$refs.view.$refs.filelist.getList('suadmin')
+					this.$refs.view.$refs.filelist.getList(path)
 					this.$message({
 						type: 'success',
 						message: '文件夹创建成功!'
@@ -294,11 +366,17 @@ export default {
 		},
 		handlePreview(file) {
 			//console.log(file)
-		}
+		},
+
+		handleClose(done) {}
 	},
 	watch: {
 		keywords: function(n) {
 			this.$store.commit('search', n)
+		},
+		'$route.path': function(newValue, oldValue) {
+			if (newValue.search(/filecontent/) == 1) this.funcbtn = false
+			else this.funcbtn = true
 		}
 	}
 }
@@ -485,7 +563,7 @@ $func-height: 70px;
 
 	.main-view {
 		min-height: calc(100% - 70px);
-		overflow-y: auto;
+		overflow: hidden;
 	}
 }
 
@@ -496,6 +574,22 @@ $func-height: 70px;
 .fade-enter,
 .fade-leave-to {
 	opacity: 0;
+}
+
+.v-enter {
+	opacity: 0;
+	transform: translateY(100%);
+}
+
+.v-leave-to {
+	opacity: 0;
+	transform: translateY(-100%);
+	//position: absolute;
+}
+
+.v-enter-active,
+.v-leave-active {
+	transition: 0.4s ease;
 }
 </style>
 

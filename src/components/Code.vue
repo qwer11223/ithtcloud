@@ -1,6 +1,6 @@
 <template>
 	<div class="filelist">
-		<FileType :path="'filetype.php?type=music'"></FileType>
+		<FileType :path="'filetype.php?type=code'"></FileType>
 	</div>
 </template>
 

@@ -7,7 +7,9 @@ export default new Vuex.Store({
   state: {
     search_keywords: '',
     checkedCities: [],
-    loading: false
+    loading: false,
+    path: '',
+    user_info: ''
   },
   mutations: {
     search(state, keywords) {

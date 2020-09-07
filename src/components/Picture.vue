@@ -1,19 +1,18 @@
 <template>
-	<div>
-		<total></total>
-    picture
+	<div class="filelist">
+		<FileType :path="'filetype.php?type=pic'"></FileType>
 	</div>
 </template>
 
 <script>
-import total from '@/components/subcomponents/Total.vue'
+// @ is an alias to /src
+
+import FileType from '@/components/subcomponents/FileType.vue'
 
 export default {
 	components: {
-		total
+		FileType
 	}
 }
 </script>
 
-<style>
-</style>

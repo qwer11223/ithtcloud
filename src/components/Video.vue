@@ -1,13 +1,17 @@
 <template>
-  <div>video</div>
+	<div class="filelist">
+		<FileType :path="'filetype.php?type=video'"></FileType>
+	</div>
 </template>
 
 <script>
-export default {
+// @ is an alias to /src
 
+import FileType from '@/components/subcomponents/FileType.vue'
+
+export default {
+	components: {
+		FileType
+	}
 }
 </script>
-
-<style>
-
-</style>

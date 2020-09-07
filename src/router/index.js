@@ -9,6 +9,7 @@ import Video from '../components/Video.vue'
 import Music from '../components/Music.vue'
 import Other from '../components/Other.vue'
 import Share from '../components/Share.vue'
+import Code from '../components/Code.vue'
 import Recycle from '../components/Recycle.vue'
 
 
@@ -32,6 +33,7 @@ const routes = [
       { path: 'music', component: Music },
       { path: 'other', component: Other },
       { path: 'share', component: Share },
+      { path: 'code', component: Code },
       { path: 'recycle', component: Recycle }
     ]
   },
@@ -49,7 +51,7 @@ const routes = [
 ]
 
 const router = new VueRouter({
-  mode:'history',
+  //mode:'history',
   routes
 })
 

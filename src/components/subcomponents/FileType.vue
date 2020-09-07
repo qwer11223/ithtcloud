@@ -35,12 +35,7 @@
 
 			<el-checkbox-group v-model="checkedCities" @change="handleCheckedCitiesChange">
 				<dl>
-					<dd
-						v-for="item in search($store.state.search_keywords)"
-						:key="item.name"
-						class="listrow"
-						@dblclick="ch(item)"
-					>
+					<dd v-for="item in search($store.state.search_keywords)" :key="item.path" class="listrow">
 						<div class="fname">
 							<el-checkbox :label="item">
 								<img
@@ -66,8 +61,9 @@ import total from '@/components/subcomponents/Total.vue'
 
 var cityOptions = []
 export default {
+	props: ['path'],
 	mounted() {
-		this.getList('suadmin')
+		this.getList(this.path)
 	},
 	data() {
 		return {
@@ -81,9 +77,8 @@ export default {
 	methods: {
 		getList(path) {
 			// 挂载页面时自动取回目录文件
-			//console.log('cloud_server/index.php?path='+path)
 			this.$store.state.loading = true
-			this.$axios.get('cloud_server/index.php?path=' + path).then(res => {
+			this.$axios.get('cloud_server/' + path).then(res => {
 				this.cities = res.data
 				this.$store.state.loading = false
 			})
@@ -102,16 +97,6 @@ export default {
 			return this.cities.filter(item => {
 				if (item.name.includes(keyword)) return item
 			})
-		},
-		ch: function(item) {
-			if (item.type == '-') {
-				if (this.path_arg === '/') this.path_arg = ''
-				if (this.path_arg === '') this.path_arg = item.name
-				else this.path_arg += '&' + item.name
-				this.$router.push('/filecontent/' + this.path_arg)
-				//this.cities = item.children
-				this.$refs.total.flag = false
-			}
 		},
 		matchType(type) {
 			var music = ['mp3', 'flac']
@@ -136,7 +121,6 @@ export default {
 			if (video.includes(type)) return 'video'
 			if (iso.includes(type)) return 'iso'
 			if (zip.includes(type)) return 'zip'
-			if (type == '-') return 'folder'
 			return 'unknow'
 		}
 	},
@@ -163,20 +147,6 @@ export default {
 	watch: {
 		checkedCities: function(n) {
 			this.$store.commit('checked', n)
-		},
-
-		'$route.params.path': function(newValue, oldValue) {
-			var newValue = newValue
-			if (newValue == 'root') {
-				newValue = '/'
-				this.$refs.total.flag = true
-			}
-			this.path_arg = newValue
-			this.$refs.total.list = newValue.split('&')
-			this.$store.state.path = newValue.replace(/\&/g, '/')
-			this.getList(
-				this.$store.state.user_info.uid + '/' + this.$store.state.path
-			)
 		}
 	},
 	components: {

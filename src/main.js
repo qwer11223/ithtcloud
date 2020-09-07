@@ -11,6 +11,9 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 Vue.use(ElementUI)
 
+import uploader from 'vue-simple-uploader'
+Vue.use(uploader)
+
 import 'font-awesome/css/font-awesome.min.css'
 
 
